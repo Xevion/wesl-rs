@@ -351,6 +351,15 @@ pub(crate) fn parse_attribute(
             Some(args) => {
                 let mut it = args.into_iter();
                 match (it.next(), it.next()) {
+                    // naga's `force` has no `ConservativeDepth`; it is carried through as a custom attribute.
+                    (Some(expr), None)
+                        if ident(expr.clone()).is_some_and(|id| *id.name() == *"force") =>
+                    {
+                        Ok(Attribute::Custom(CustomAttribute {
+                            name,
+                            arguments: Some(vec![expr]),
+                        }))
+                    }
                     (Some(expr), None) => match ident(expr).and_then(|id| id.name().parse().ok()) {
                         Some(c) => Ok(Attribute::EarlyDepthTest(Some(c))),
                         _ => Err(E::Attribute(
